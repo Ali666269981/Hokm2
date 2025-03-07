@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>حکم دو نفره - نسخه حرفه‌ای</title>
+  <style>
+    body {
+      font-family: 'Tahoma', Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      text-align: center;
+      direction: rtl;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    #status {
+      font-size: 1.2em;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    #trump {
+      margin: 20px 0;
+    }
+    #trump button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 1.1em;
+      background: #ff6f61;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    #trump button:hover {
+      transform: scale(1.05);
+    }
+    #cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .card {
+      width: 100px;
+      height: 150px;
+      background-size: cover;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    #trick {
+      margin: 20px 0;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+    }
+    #currentTrick img {
+      width: 80px;
+      height: 120px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+    #tricks {
+      font-size: 1.5em;
+      color: #ffd700;
+    }
+    #restartBtn {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      background: #4caf50;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-top: 20px;
+    }
+    #restartBtn:hover {
+      transform: scale(1.05);
+    }
+    /* استایل بخش چت */
+    #chat {
+      margin-top: 30px;
+      max-width: 600px;
+      margin-right: auto;
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    #chatMessages {
+      height: 200px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      text-align: right;
+    }
+    #chatInput {
+      padding: 10px;
+      width: 70%;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      font-size: 1em;
+    }
+    #chatSendBtn {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      background: #2196F3;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-right: 5px;
+    }
+    #chatSendBtn:hover {
+      transform: scale(1.05);
+    }
+    /* بخش انتخاب ایموجی */
+    #emojiPicker {
+      margin-top: 10px;
+    }
+    .emoji {
+      cursor: pointer;
+      font-size: 1.5em;
+      margin: 0 5px;
+      transition: transform 0.2s;
+    }
+    .emoji:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>حکم دو نفره</h1>
+  <p id="status">در انتظار بازیکن دوم...</p>
+  <div id="trump" style="display: none;">
+    <button onclick="setTrump('hearts')">♥ دل</button>
+    <button onclick="setTrump('diamonds')">♦ خشت</button>
+    <button onclick="setTrump('clubs')">♣ گشنیز</button>
+    <button onclick="setTrump('spades')">♠ پیک</button>
+  </div>
+  <div id="cards"></div>
+  <div id="trick">ترفند فعلی: <span id="currentTrick"></span></div>
+  <p>امتیاز شما: <span id="tricks">0</span></p>
+  <button id="restartBtn" style="display:none;" onclick="restartGame()">شروع مجدد بازی</button>
+  
+  <!-- بخش چت با بهبود رابط کاربری و ایموجی -->
+  <div id="chat">
+    <div id="chatMessages"></div>
+    <input type="text" id="chatInput" placeholder="پیام خود را وارد کنید...">
+    <button id="chatSendBtn">ارسال</button>
+    <div id="emojiPicker">
+      <span class="emoji" onclick="insertEmoji('😀')">😀</span>
+      <span class="emoji" onclick="insertEmoji('😂')">😂</span>
+      <span class="emoji" onclick="insertEmoji('😍')">😍</span>
+      <span class="emoji" onclick="insertEmoji('👍')">👍</span>
+      <span class="emoji" onclick="insertEmoji('😎')">😎</span>
+      <span class="emoji" onclick="insertEmoji('🙌')">🙌</span>
+    </div>
+  </div>
+
+  <script>
+    const ws = new WebSocket('ws://localhost:8080');
+    let playerId, isRuler, currentCards = [];
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'connected') {
+        playerId = data.playerId;
+        document.getElementById('status').innerText = data.message;
+      } else if (data.type === 'gameStart') {
+        document.getElementById('status').innerText = 'بازی شروع شد! کارت‌هات رو ببین.';
+        isRuler = data.isRuler;
+        if (isRuler) {
+          document.getElementById('trump').style.display = 'block';
+          document.getElementById('status').innerText += ' تو حاکمی، یه خال حکم انتخاب کن!';
+        }
+        document.getElementById('restartBtn').style.display = 'none';
+        currentCards = data.cards;
+        showCards(currentCards);
+      } else if (data.type === 'trumpSet') {
+        document.getElementById('status').innerText = `حکم: ${translateSuit(data.suit)}`;
+        document.getElementById('trump').style.display = 'none';
+      } else if (data.type === 'cardPlayed') {
+        const trickSpan = document.getElementById('currentTrick');
+        const img = document.createElement('img');
+        img.src = `https://deckofcardsapi.com/static/img/${data.card.rank}${data.card.suit[0].toUpperCase()}.png`;
+        trickSpan.appendChild(img);
+      } else if (data.type === 'updateCards') {
+        currentCards = data.cards;
+        showCards(currentCards);
+      } else if (data.type === 'trickResolved') {
+        document.getElementById('currentTrick').innerHTML = '';
+        document.getElementById('tricks').innerText = playerId === 1 ? data.player1Tricks : data.player2Tricks;
+        document.getElementById('status').innerText = `بازیکن ${data.winner} ترفند رو برد! نوبت بازیکن ${data.winner}`;
+      } else if (data.type === 'gameOver') {
+        document.getElementById('status').innerText = `بازی تموم شد! برنده: بازیکن ${data.winner}`;
+        document.getElementById('cards').innerHTML = '';
+        document.getElementById('restartBtn').style.display = 'inline-block';
+      } else if (data.type === 'chatMessage') {
+        addChatMessage(data);
+      } else if (data.type === 'error') {
+        document.getElementById('status').innerText = data.message;
+      }
+    };
+
+    function showCards(cards) {
+      const cardsDiv = document.getElementById('cards');
+      cardsDiv.innerHTML = '';
+      cards.forEach(card => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.style.backgroundImage = `url(https://deckofcardsapi.com/static/img/${card.rank}${card.suit[0].toUpperCase()}.png)`;
+        cardDiv.onclick = () => playCard(card);
+        cardsDiv.appendChild(cardDiv);
+      });
+    }
+
+    function setTrump(suit) {
+      ws.send(JSON.stringify({ type: 'setTrump', suit }));
+    }
+
+    function playCard(card) {
+      ws.send(JSON.stringify({ type: 'playCard', card }));
+    }
+
+    function restartGame() {
+      ws.send(JSON.stringify({ type: 'restartGame' }));
+    }
+
+    function translateSuit(suit) {
+      const suits = { hearts: 'دل ♥', diamonds: 'خشت ♦', clubs: 'گشنیز ♣', spades: 'پیک ♠' };
+      return suits[suit];
+    }
+
+    // ارسال پیام چت
+    document.getElementById('chatSendBtn').addEventListener('click', () => {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (message) {
+        ws.send(JSON.stringify({ type: 'chatMessage', message }));
+        input.value = '';
+      }
+    });
+    // ارسال پیام با زدن Enter
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('chatSendBtn').click();
+      }
+    });
+
+    // نمایش پیام چت در ناحیه چت
+    function addChatMessage(data) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.style.marginBottom = '8px';
+      messageDiv.innerText = `بازیکن ${data.playerId}: ${data.message}`;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // تابع افزودن ایموجی به ورودی چت
+    function insertEmoji(emoji) {
+      const input = document.getElementById('chatInput');
+      input.value += emoji;
+      input.focus();
+    }
+  </script>
+</body>
+</html>

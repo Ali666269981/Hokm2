@@ -1,0 +1,12 @@
+{
+  "name": "hokm-game",
+  "version": "1.0.0",
+  "description": "Hokm 2-player game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
