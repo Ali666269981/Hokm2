@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
-const Deck = require('deck-of-cards');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -12,8 +13,53 @@ const logger = winston.createLogger({
   ],
 });
 
+// ساخت سرور HTTP برای سرو فایل‌های استاتیک
+const server = http.createServer((req, res) => {
+  const filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+  const extname = path.extname(filePath);
+  const contentType = {
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+    '.css': 'text/css',
+    '.png': 'image/png'
+  }[extname] || 'application/octet-stream';
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('File not found');
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+    }
+  });
+});
+
+// اتصال WebSocket به سرور HTTP
+const wss = new WebSocket.Server({ server });
+
 let players = [];
 let gameState = {};
+
+// ساخت دسته کارت‌ها
+const suits = ['spades', 'hearts', 'clubs', 'diamonds'];
+const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const deck = [];
+
+for (let suit of suits) {
+  for (let rank of ranks) {
+    deck.push({ suit, rank });
+  }
+}
+
+// تابع shuffle
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
 function resetGameState() {
   gameState = {
@@ -72,16 +118,15 @@ wss.on('connection', (ws) => {
 });
 
 function startGame() {
-  const deck = new Deck();
-  deck.shuffle();
-  const cards = deck.cards.slice(0, 26);
+  const shuffledDeck = shuffle([...deck]); // کپی از دسته کارت‌ها و شافل کردن
+  const cards = shuffledDeck.slice(0, 26);
   gameState.player1Cards = cards.slice(0, 13);
   gameState.player2Cards = cards.slice(13, 26);
   gameState.turn = 1;
 
   logger.info('بازی شروع شد!');
-  logger.info('دست بازیکن 1: ' + gameState.player1Cards.map(c => `${c.rank} ${c.suit}`).join(', '));
-  logger.info('دست بازیکن 2: ' + gameState.player2Cards.map(c => `${c.rank} ${c.suit}`).join(', '));
+  logger.info('دست بازیکن 1: ' + gameState.player1Cards.map(c => `${c.rank}_of_${c.suit}`).join(', '));
+  logger.info('دست بازیکن 2: ' + gameState.player2Cards.map(c => `${c.rank}_of_${c.suit}`).join(', '));
 
   players[0].send(JSON.stringify({ type: 'gameStart', cards: gameState.player1Cards, isRuler: true }));
   players[1].send(JSON.stringify({ type: 'gameStart', cards: gameState.player2Cards, isRuler: false }));
@@ -196,4 +241,7 @@ function broadcast(message) {
   players.forEach(p => p.send(JSON.stringify(message)));
 }
 
-console.log('سرور در پورت 8080 فعال است');
+// اجرا روی پورت محیطی (برای Render) یا 8080 (محلی)
+server.listen(process.env.PORT || 8080, () => {
+  console.log(`سرور روی پورت ${process.env.PORT || 8080} فعال است. برو به http://localhost:${process.env.PORT || 8080}`);
+});
