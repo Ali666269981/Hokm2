@@ -41,12 +41,39 @@
     #trump button:hover {
       transform: scale(1.05);
     }
+    #gameArea {
+      flex: 3;
+    }
+    #chatArea {
+      flex: 1;
+      max-width: 300px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      height: 100vh;
+      overflow-y: auto;
+    }
     #cards {
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
+      gap: 20px;
+      flex-wrap: wrap;
       margin: 20px 0;
+    }
+    .suit-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .suit-group h3 {
+      margin: 5px 0;
+      font-size: 1.2em;
+      color: #ffd700;
     }
     .card {
       width: 100px;
@@ -59,6 +86,17 @@
     }
     .card:hover {
       transform: scale(1.05);
+    }
+    .card-playing {
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: appear 0.5s forwards;
+    }
+    @keyframes appear {
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
     #trick {
       margin: 20px 0;
@@ -86,20 +124,10 @@
       cursor: pointer;
       transition: transform 0.2s;
       margin-top: 20px;
+      display: none;
     }
     #restartBtn:hover {
       transform: scale(1.05);
-    }
-    /* استایل بخش چت */
-    #chat {
-      margin-top: 30px;
-      max-width: 600px;
-      margin-right: auto;
-      margin-left: auto;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     #chatMessages {
       height: 200px;
@@ -121,7 +149,7 @@
     #chatSendBtn {
       padding: 10px 20px;
       font-size: 1.1em;
-      background: #2196F3;
+      background: #2196f3;
       border: none;
       color: white;
       border-radius: 5px;
@@ -132,7 +160,6 @@
     #chatSendBtn:hover {
       transform: scale(1.05);
     }
-    /* بخش انتخاب ایموجی */
     #emojiPicker {
       margin-top: 10px;
     }
@@ -145,39 +172,61 @@
     .emoji:hover {
       transform: scale(1.2);
     }
+    @media (max-width: 768px) {
+      .suit-group {
+        width: 100px;
+      }
+      .card {
+        width: 80px;
+        height: 120px;
+      }
+      #currentTrick img {
+        width: 60px;
+        height: 90px;
+      }
+      #chatInput {
+        width: 60%;
+      }
+      h1 {
+        font-size: 2em;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>حکم دو نفره</h1>
-  <p id="status">در انتظار بازیکن دوم...</p>
-  <div id="trump" style="display: none;">
-    <button onclick="setTrump('hearts')">♥ دل</button>
-    <button onclick="setTrump('diamonds')">♦ خشت</button>
-    <button onclick="setTrump('clubs')">♣ گشنیز</button>
-    <button onclick="setTrump('spades')">♠ پیک</button>
-  </div>
-  <div id="cards"></div>
-  <div id="trick">ترفند فعلی: <span id="currentTrick"></span></div>
-  <p>امتیاز شما: <span id="tricks">0</span></p>
-  <button id="restartBtn" style="display:none;" onclick="restartGame()">شروع مجدد بازی</button>
-  
-  <!-- بخش چت با بهبود رابط کاربری و ایموجی -->
-  <div id="chat">
-    <div id="chatMessages"></div>
-    <input type="text" id="chatInput" placeholder="پیام خود را وارد کنید...">
-    <button id="chatSendBtn">ارسال</button>
-    <div id="emojiPicker">
-      <span class="emoji" onclick="insertEmoji('😀')">😀</span>
-      <span class="emoji" onclick="insertEmoji('😂')">😂</span>
-      <span class="emoji" onclick="insertEmoji('😍')">😍</span>
-      <span class="emoji" onclick="insertEmoji('👍')">👍</span>
-      <span class="emoji" onclick="insertEmoji('😎')">😎</span>
-      <span class="emoji" onclick="insertEmoji('🙌')">🙌</span>
+  <div style="display: flex; justify-content: space-between;">
+    <div id="gameArea">
+      <h1>حکم دو نفره</h1>
+      <p id="status">در انتظار بازیکن دوم...</p>
+      <div id="trump" style="display: none;">
+        <button onclick="setTrump('hearts')">♥ دل</button>
+        <button onclick="setTrump('diamonds')">♦ خشت</button>
+        <button onclick="setTrump('clubs')">♣ گشنیز</button>
+        <button onclick="setTrump('spades')">♠ پیک</button>
+      </div>
+      <div id="cards"></div>
+      <div id="trick">دست فعلی: <span id="currentTrick"></span></div>
+      <p>امتیاز شما: <span id="tricks">0</span></p>
+      <button id="restartBtn" onclick="restartGame()">شروع مجدد بازی</button>
+    </div>
+    <div id="chatArea">
+      <div id="chatMessages"></div>
+      <input type="text" id="chatInput" placeholder="پیام خود را وارد کنید...">
+      <button id="chatSendBtn">ارسال</button>
+      <div id="emojiPicker">
+        <span class="emoji" onclick="insertEmoji('😂')">😂</span>
+        <span class="emoji" onclick="insertEmoji('😊')">😊</span>
+        <span class="emoji" onclick="insertEmoji('❤️')">❤️</span>
+        <span class="emoji" onclick="insertEmoji('👍')">👍</span>
+        <span class="emoji" onclick="insertEmoji('😍')">😍</span>
+        <span class="emoji" onclick="insertEmoji('😎')">😎</span>
+        <span class="emoji" onclick="insertEmoji('🙌')">🙌</span>
+      </div>
     </div>
   </div>
 
   <script>
-    const ws = new WebSocket('wss://Hokm2.onrender.com');
+    const ws = new WebSocket('ws://localhost:8080');
     let playerId, isRuler, currentCards = [];
 
     ws.onmessage = (event) => {
@@ -200,9 +249,10 @@
         document.getElementById('trump').style.display = 'none';
       } else if (data.type === 'cardPlayed') {
         const trickSpan = document.getElementById('currentTrick');
-        const img = document.createElement('img');
-        img.src = `https://deckofcardsapi.com/static/img/${data.card.rank}${data.card.suit[0].toUpperCase()}.png`;
-        trickSpan.appendChild(img);
+        const playerName = data.playerId === playerId ? 'شما' : 'حریف';
+        const cardDiv = document.createElement('div');
+        cardDiv.innerHTML = `<img src="${getCardImageUrl(data.card)}" class="card-playing"> <span>${playerName}</span>`;
+        trickSpan.appendChild(cardDiv);
       } else if (data.type === 'updateCards') {
         currentCards = data.cards;
         showCards(currentCards);
@@ -221,16 +271,56 @@
       }
     };
 
+    function getCardRankName(rank) {
+      const rankMap = {
+        'A': 'ace',
+        'J': 'jack',
+        'Q': 'queen',
+        'K': 'king',
+        '2': '2',
+        '3': '3',
+        '4': '4',
+        '5': '5',
+        '6': '6',
+        '7': '7',
+        '8': '8',
+        '9': '9',
+        '10': '10'
+      };
+      return rankMap[rank];
+    }
+
+    function getCardImageUrl(card) {
+      return `cards/${getCardRankName(card.rank)}_of_${card.suit.toLowerCase()}.png`;
+    }
+
     function showCards(cards) {
       const cardsDiv = document.getElementById('cards');
       cardsDiv.innerHTML = '';
-      cards.forEach(card => {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'card';
-        cardDiv.style.backgroundImage = `url(https://deckofcardsapi.com/static/img/${card.rank}${card.suit[0].toUpperCase()}.png)`;
-        cardDiv.onclick = () => playCard(card);
-        cardsDiv.appendChild(cardDiv);
-      });
+
+      const rankOrder = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+      const suits = { hearts: [], diamonds: [], clubs: [], spades: [] };
+      cards.forEach(card => suits[card.suit].push(card));
+
+      for (let suit in suits) {
+        suits[suit].sort((a, b) => rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank));
+      }
+
+      for (let suit in suits) {
+        if (suits[suit].length > 0) {
+          const suitDiv = document.createElement('div');
+          suitDiv.className = 'suit-group';
+          suitDiv.innerHTML = `<h3>${translateSuit(suit)}</h3>`;
+          suits[suit].forEach(card => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            cardDiv.style.backgroundImage = `url(${getCardImageUrl(card)})`;
+            cardDiv.onclick = () => playCard(card);
+            suitDiv.appendChild(cardDiv);
+          });
+          cardsDiv.appendChild(suitDiv);
+        }
+      }
     }
 
     function setTrump(suit) {
@@ -250,7 +340,6 @@
       return suits[suit];
     }
 
-    // ارسال پیام چت
     document.getElementById('chatSendBtn').addEventListener('click', () => {
       const input = document.getElementById('chatInput');
       const message = input.value.trim();
@@ -259,27 +348,29 @@
         input.value = '';
       }
     });
-    // ارسال پیام با زدن Enter
+
     document.getElementById('chatInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         document.getElementById('chatSendBtn').click();
       }
     });
 
-    // نمایش پیام چت در ناحیه چت
     function addChatMessage(data) {
       const chatMessages = document.getElementById('chatMessages');
       const messageDiv = document.createElement('div');
       messageDiv.style.marginBottom = '8px';
-      messageDiv.innerText = `بازیکن ${data.playerId}: ${data.message}`;
+      messageDiv.textContent = `بازیکن ${data.sender}: ${data.message}`;
       chatMessages.appendChild(messageDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // تابع افزودن ایموجی به ورودی چت
     function insertEmoji(emoji) {
       const input = document.getElementById('chatInput');
-      input.value += emoji;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.substring(0, start) + emoji + text.substring(end);
+      input.selectionStart = input.selectionEnd = start + emoji.length;
       input.focus();
     }
   </script>
