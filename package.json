@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "ws": "^8.18.0",
-    "deck-of-cards": "^1.0.1",
+    "deck-of-cards": "0.1.8",
     "winston": "^3.15.0"
   }
 }
